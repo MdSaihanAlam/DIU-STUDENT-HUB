@@ -94,7 +94,7 @@ export default function Alumni() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader icon={GraduationCap} tone="emerald"
         title="Alumni & professional network"
         subtitle="Learn from DIU graduates, explore career paths and request mentorship."
         actions={

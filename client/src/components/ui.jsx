@@ -84,16 +84,81 @@ export function SearchInput({ value, onChange, placeholder = 'Search…', label 
   );
 }
 
-export function Avatar({ user, src, name, size = '', className = '' }) {
+// Curated gradient pairs; each name always gets the same one so people are recognisable.
+const AVATAR_GRADIENTS = [
+  ['#3d63ff', '#6b4dff'],
+  ['#0891b2', '#22d3ee'],
+  ['#7c3aed', '#c084fc'],
+  ['#db2777', '#f472b6'],
+  ['#ea580c', '#fbbf24'],
+  ['#059669', '#34d399'],
+  ['#1d3166', '#3d63ff'],
+  ['#9333ea', '#3d63ff'],
+];
+const gradientFor = (name = '') => {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  const [a, b] = AVATAR_GRADIENTS[h % AVATAR_GRADIENTS.length];
+  return `linear-gradient(135deg, ${a}, ${b})`;
+};
+
+export function Avatar({ user, src, name, size = '', className = '', style }) {
   const n = name || user?.name || '?';
   const url = src || user?.avatarUrl;
   const [failed, setFailed] = useState(false);
   const cls = `avatar ${size ? `avatar-${size}` : ''} ${className}`;
-  if (url && !failed) return <img className={cls} src={fileUrl(url)} alt="" loading="lazy" onError={() => setFailed(true)} />;
+  if (url && !failed) return <img className={cls} src={fileUrl(url)} alt="" loading="lazy" onError={() => setFailed(true)} style={style} />;
   return (
-    <span className={cls} aria-hidden="true">
+    <span className={cls} aria-hidden="true" style={{ '--avatar-bg': gradientFor(n), ...style }}>
       {initials(n)}
     </span>
+  );
+}
+
+/** Square tile showing a "logo" letter for communities/departments, coloured by name. */
+export function LetterTile({ name = '?', size = 48, radius = 14, children }) {
+  return (
+    <span className="avatar" aria-hidden="true" style={{ '--size': `${size}px`, borderRadius: radius, '--avatar-bg': gradientFor(name), boxShadow: 'none' }}>
+      {children || name.replace(/[^\p{L}\p{N}]/gu, '').slice(0, 1).toUpperCase()}
+    </span>
+  );
+}
+
+/** Colour-coded icon tile. tone: blue | cyan | violet | pink | amber | emerald */
+export function IconTile({ icon: Icon, tone = 'blue', size = '' }) {
+  return (
+    <span className={`icon-tile tone-${tone} ${size}`} aria-hidden="true">
+      <Icon size={size === 'lg' ? 24 : size === 'sm' ? 17 : 20} />
+    </span>
+  );
+}
+
+/** 0–4 password strength score (length, variety, no obvious patterns). */
+export function scorePassword(p = '') {
+  if (!p) return 0;
+  let s = 0;
+  if (p.length >= 8) s++;
+  if (p.length >= 12) s++;
+  if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++;
+  if (/\d/.test(p) && /[^A-Za-z0-9]/.test(p)) s++;
+  if (/^(.)\1+$/.test(p) || /^(password|12345678|qwerty)/i.test(p)) s = 1;
+  return Math.max(1, Math.min(4, s));
+}
+
+export function PasswordStrength({ value }) {
+  const score = scorePassword(value);
+  if (!value) return null;
+  const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+  return (
+    <div className="stack" style={{ gap: 4 }} aria-live="polite">
+      <div className="strength" data-score={score} aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+      <span className="xs subtle">Password strength: {labels[score]}</span>
+    </div>
   );
 }
 
@@ -173,12 +238,37 @@ export function GridSkeleton({ count = 6 }) {
   );
 }
 
+/** Small layered illustration used in empty states: a floating card stack with the feature icon. */
+function EmptyArt({ Icon }) {
+  return (
+    <div className="empty-art" aria-hidden="true" style={{ position: 'relative' }}>
+      <svg viewBox="0 0 132 104" width="132" height="104" style={{ position: 'absolute', inset: 0 }}>
+        <defs>
+          <linearGradient id="ea-g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#3d63ff" stopOpacity=".18" />
+            <stop offset="1" stopColor="#22d3ee" stopOpacity=".12" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="66" cy="96" rx="44" ry="6" fill="currentColor" opacity=".06" />
+        <rect x="22" y="22" width="88" height="62" rx="14" fill="url(#ea-g)" transform="rotate(-6 66 53)" />
+        <rect x="26" y="16" width="80" height="64" rx="14" fill="var(--bg-elevated)" stroke="var(--border-strong)" />
+        <rect x="40" y="56" width="52" height="6" rx="3" fill="var(--bg-subtle)" />
+        <rect x="48" y="66" width="36" height="6" rx="3" fill="var(--bg-subtle)" />
+        <circle cx="112" cy="20" r="4" fill="#22d3ee" opacity=".7" />
+        <circle cx="16" cy="40" r="3" fill="#a78bfa" opacity=".8" />
+        <path d="M118 52l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#3d63ff" opacity=".55" />
+      </svg>
+      <div className="empty-icon" style={{ position: 'absolute', left: '50%', top: 18, transform: 'translateX(-50%)', width: 44, height: 44, borderRadius: 14, margin: 0 }}>
+        <Icon size={22} />
+      </div>
+    </div>
+  );
+}
+
 export function EmptyState({ icon: Icon = Inbox, title = 'Nothing here yet', children, action }) {
   return (
     <div className="empty">
-      <div className="empty-icon">
-        <Icon size={26} aria-hidden="true" />
-      </div>
+      <EmptyArt Icon={Icon} />
       <h3>{title}</h3>
       {children && <p className="muted" style={{ maxWidth: 420, margin: '0 auto 12px' }}>{children}</p>}
       {action}
@@ -385,13 +475,16 @@ export function MenuItem({ icon: Icon, children, danger, to, ...rest }) {
   );
 }
 
-export function PageHeader({ title, subtitle, actions, children }) {
+export function PageHeader({ title, subtitle, actions, children, icon, tone = 'blue' }) {
   return (
-    <header className="page-header">
-      <div className="grow">
-        <h1>{title}</h1>
-        {subtitle && <p>{subtitle}</p>}
-        {children}
+    <header className="page-header rise">
+      <div className="page-header-main">
+        {icon && <IconTile icon={icon} tone={tone} size="lg" />}
+        <div className="grow">
+          <h1>{title}</h1>
+          {subtitle && <p>{subtitle}</p>}
+          {children}
+        </div>
       </div>
       {actions && <div className="row-wrap">{actions}</div>}
     </header>

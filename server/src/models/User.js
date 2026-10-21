@@ -56,6 +56,8 @@ const userSchema = new Schema(
     blocked: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 
     status: { type: String, enum: ['active', 'suspended', 'deletion_requested', 'deleted'], default: 'active', index: true },
+    lastLoginAt: Date,
+    passwordChangedAt: Date,
     suspendedReason: String,
     deletionRequestedAt: Date,
 
@@ -73,6 +75,7 @@ userSchema.index({ department: 1, affiliation: 1 });
 
 userSchema.methods.setPassword = async function setPassword(plain) {
   this.passwordHash = await bcrypt.hash(plain, 12);
+  this.passwordChangedAt = new Date();
 };
 
 userSchema.methods.checkPassword = function checkPassword(plain) {

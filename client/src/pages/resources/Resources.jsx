@@ -4,7 +4,7 @@ import { BookOpen, Download, FileText, Upload } from 'lucide-react';
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useApi, useDebounce, useDocumentTitle, usePaginated, useQueryFilters } from '../../hooks/index.js';
-import { Alert, Badge, Button, Dialog, EmptyState, ErrorState, FileDrop, GridSkeleton, LoadMore, PageHeader, SampleBadge, SearchInput, SelectField, Stars, Tabs, TextField } from '../../components/ui.jsx';
+import { Alert, Badge, Button, IconTile, Dialog, EmptyState, ErrorState, FileDrop, GridSkeleton, LoadMore, PageHeader, SampleBadge, SearchInput, SelectField, Stars, Tabs, TextField } from '../../components/ui.jsx';
 import { DepartmentFilter, DepartmentSelect, SaveButton } from '../../components/common.jsx';
 import { RESOURCE_TYPES, label } from '../../utils/constants.js';
 import { formatBytes, timeAgo } from '../../utils/format.js';
@@ -83,13 +83,13 @@ function UploadDialog({ open, onClose, onUploaded }) {
   );
 }
 
+const TYPE_TONE = { notes: 'blue', slides: 'violet', book: 'emerald', question_paper: 'amber', lab_manual: 'cyan', assignment: 'pink' };
+
 export function ResourceCard({ r }) {
   return (
     <Link to={`/resources/${r._id}`} className="card card-link stack" style={{ gap: 10 }}>
       <div className="row between">
-        <div className="feature-icon" style={{ width: 40, height: 40, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'var(--primary-softer)', color: 'var(--primary)' }}>
-          <FileText size={20} aria-hidden="true" />
-        </div>
+        <IconTile icon={FileText} tone={TYPE_TONE[r.resourceType] || 'blue'} />
         <div className="row">
           {r.status && r.status !== 'approved' && <Badge tone={r.status === 'pending' ? 'warning' : 'danger'}>{r.status}</Badge>}
           <SaveButton type="resource" id={r._id} saved={r.saved} />
@@ -134,7 +134,7 @@ export default function Resources() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader icon={BookOpen} tone="blue"
         title="Notes & resources"
         subtitle="Lecture notes, slides, previous questions and study materials shared by the community."
         actions={

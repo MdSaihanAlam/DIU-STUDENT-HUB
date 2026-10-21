@@ -6,6 +6,7 @@ import {
   optDate,
   optObjectId,
   optText,
+  notPersonal,
   optUrl,
   password,
   stringList,
@@ -32,12 +33,13 @@ export const registerSchema = z.object({
   password,
   affiliation: z.enum(['student', 'faculty', 'alumni']).default('student'),
   acceptTerms: z.literal(true, { errorMap: () => ({ message: 'You must accept the terms and community guidelines' }) }),
-});
-export const loginSchema = z.object({ email, password: z.string().min(1, 'Password is required').max(128) });
+}).refine((v) => notPersonal(v.password, v), { path: ['password'], message: 'Password must not contain your name or email' });
+export const loginSchema = z.object({ email, password: z.string().min(1, 'Password is required').max(256) });
 export const forgotSchema = z.object({ email });
 export const resetSchema = z.object({ token: z.string().min(20).max(200), password });
 export const tokenSchema = z.object({ token: z.string().min(20).max(200) });
-export const changePasswordSchema = z.object({ currentPassword: z.string().min(1).max(128), newPassword: password });
+export const changePasswordSchema = z.object({ currentPassword: z.string().min(1).max(256), newPassword: password });
+export const confirmPasswordSchema = z.object({ password: z.string().min(1, 'Enter your password to confirm').max(256) });
 
 // ---------- Profile ----------
 export const profileSchema = z.object({

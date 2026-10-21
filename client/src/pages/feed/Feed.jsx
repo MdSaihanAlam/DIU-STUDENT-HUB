@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Hash, MessagesSquare, X } from 'lucide-react';
+import { BedDouble, BookOpen, CalendarDays, FlaskConical, Hash, MessagesSquare, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useDebounce, useDocumentTitle, usePaginated, useQueryFilters } from '../../hooks/index.js';
 import { Button, CardSkeleton, Chips, EmptyState, ErrorState, LoadMore, SearchInput } from '../../components/ui.jsx';
@@ -15,6 +15,40 @@ const FILTERS = [
   ['communities', 'My communities'],
   ['following', 'Connections'],
 ];
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 5) return 'Up late';
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function Welcome({ name }) {
+  const first = (name || '').replace(/\(.*?\)/g, '').trim().split(/\s+/)[0];
+  return (
+    <section className="welcome rise" aria-label="Welcome">
+      <h1>
+        {greeting()}, {first} <span aria-hidden="true">👋</span>
+      </h1>
+      <p>Here’s what’s happening across campus today.</p>
+      <nav className="quick-actions" aria-label="Quick actions">
+        <Link to="/resources">
+          <BookOpen size={16} aria-hidden="true" /> Find notes
+        </Link>
+        <Link to="/events">
+          <CalendarDays size={16} aria-hidden="true" /> Events
+        </Link>
+        <Link to="/housing">
+          <BedDouble size={16} aria-hidden="true" /> Housing
+        </Link>
+        <Link to="/research">
+          <FlaskConical size={16} aria-hidden="true" /> Research
+        </Link>
+      </nav>
+    </section>
+  );
+}
 
 export default function Feed() {
   useDocumentTitle('Home');
@@ -45,6 +79,7 @@ export default function Feed() {
 
   return (
     <div className="main-narrow stack">
+      <Welcome name={user?.name} />
       <Composer onCreated={(p) => (filters.filter === 'latest' && !filters.hashtag ? prependItem(p) : reload())} />
 
       <div className="stack" style={{ gap: 10 }}>

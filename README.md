@@ -8,10 +8,10 @@ An independent, community-run platform for students, faculty, researchers and al
 
 | Layer | Choice |
 | --- | --- |
-| Frontend | React 18 + Vite 6, React Router 6, Lucide icons, plain CSS with design tokens (light/dark) |
+| Frontend | React 18 + Vite 6, React Router 7, Lucide icons, plain CSS design system (tokens, light/dark, Inter + Plus Jakarta Sans) |
 | Backend | Node.js (≥20) + Express 4, REST under `/api/v1` |
 | Database | MongoDB + Mongoose 8 |
-| Auth | JWT in an HttpOnly cookie, bcrypt (cost 12), double-submit CSRF token |
+| Auth | HS256-pinned JWT in an HttpOnly `__Host-` cookie, bcrypt (cost 12), double-submit CSRF token, progressive lockout |
 | Validation | zod (whitelists fields, so `role`, `owner`, `verified` etc. can never be set by clients) |
 | Files | Pluggable storage interface (`server/src/services/storage.js`), local-disk driver included |
 | Tests | `node:test` + supertest + mongodb-memory-server |
@@ -55,7 +55,7 @@ Without SMTP configured, password-reset and email-verification links are printed
 | `npm run dev` | API (watch mode) + client, using `server/.env` |
 | `npm run dev:mem` | Same, with in-memory MongoDB and auto-seed |
 | `npm run seed` | Reset the database to demo data |
-| `npm test` | Server integration tests (22 tests: auth, CSRF, permissions, posts, uploads, moderation, privacy) |
+| `npm test` | Server integration tests (37 tests: auth, CSRF, permissions, posts, uploads, moderation, privacy, password policy, lockout, sessions, headers) |
 | `npm run lint` | ESLint for the client |
 | `npm run build` | Production build of the client into `client/dist` |
 | `npm start` | Start the API in production mode |
@@ -107,15 +107,28 @@ docs/API.md             endpoint reference
 
 ## Security measures
 
-- bcrypt password hashing, timing-equalised login, generic error messages, token-version based session revocation (password change, reset, suspension).
-- HttpOnly + `Secure` (production) + configurable `SameSite` cookies; double-submit CSRF token on every non-GET request.
-- Helmet headers, strict CORS allowlist (`CLIENT_ORIGINS`), rate limits on auth, writes and the whole API.
-- zod validation and whitelisting on every write; `$`/dotted keys stripped from input (NoSQL injection); user search terms are regex-escaped.
-- Uploads: memory-buffered, size-limited, extension + MIME + magic-byte checks, random server-generated filenames, never executed, served with `nosniff` and a sandboxing CSP; resource files only through permission-checked download routes.
-- Contact details private by default (emails, housing contacts, alumni contact are opt-in).
-- No secrets in the repo; no request bodies in logs.
+**Accounts & sessions**
+- Passwords: bcrypt (cost 12); minimum 10 characters, maximum 72 bytes (bcrypt's limit, so nothing is silently truncated); common/breached passwords and passwords containing the user's name or email are rejected. No arbitrary composition rules (NIST SP 800-63B guidance) — the UI shows a strength meter instead.
+- Brute-force protection: per-IP rate limits plus a per-email progressive lockout (5 free attempts, then 1 → 2 → 4 … 30 min). Unknown emails get identical treatment and timing, so sign-in never reveals which accounts exist.
+- Sessions: HS256-pinned JWT (issuer + audience checked; `alg: none` and foreign keys rejected) in an HttpOnly, `Secure`, `__Host-`-prefixed cookie in production. A token version on the user revokes every session on password change/reset, suspension or "Sign out of all devices".
+- Sensitive actions re-authenticate: changing the password needs the current one; deleting the account needs the password. Password changes trigger an email notice. Settings show the last sign-in time.
 
-**Remaining risks / to do before production:** no antivirus scanning of uploads; no image re-encoding (EXIF metadata is preserved); rate limits are per-process memory (use a shared store such as Redis behind multiple instances); email verification is tracked but not required to use the app; no automated purge job for the 14-day deletion grace period (admins erase manually); the app has not had an external security review.
+**Requests**
+- Double-submit CSRF token (also `__Host-` prefixed) on every non-GET request; strict CORS allowlist (`CLIENT_ORIGINS`).
+- zod validation and whitelisting on every write (clients can never set `role`, `owner`, `verified`…); `$`/dotted keys stripped; query strings parsed flat — repeated parameters collapse to one string (blocks parameter pollution and operator smuggling); search terms regex-escaped and length-capped.
+- Rate limits on auth, writes and the whole API.
+
+**Responses & headers**
+- API: `default-src 'none'` CSP, `frame-ancestors 'none'`, HSTS (production), `no-referrer`, `nosniff`, Permissions-Policy, and `Cache-Control: no-store` on all personal-data responses. Errors never leak stack traces in production; request bodies are never logged.
+- Frontend (`client/vercel.json`): strict CSP with `script-src 'self'` (the theme bootstrap script is an external file so no inline script is needed), HSTS, `X-Frame-Options: DENY`, COOP, Permissions-Policy.
+- Open-redirect protection on `?next=` after sign-in (rejects `//`, `/\` and encoded variants).
+
+**Files & privacy**
+- Uploads: size-limited, extension + MIME + magic-byte checks, random server-generated names, never executed, served with `nosniff` and a sandboxing CSP; course files only through permission-checked download routes.
+- Contact details private by default (emails, housing contacts, alumni contact are opt-in). No secrets in the repo.
+- Dependencies: `npm audit --omit=dev` reports 0 known vulnerabilities (nodemailer and react-router were upgraded to patched versions).
+
+**Remaining risks / to do before production:** no antivirus scanning of uploads; no image re-encoding (EXIF metadata is preserved); rate limits and sign-in lockout counters live in process memory (use a shared store such as Redis behind multiple instances); no two-factor authentication yet; email verification is tracked but not required; no automated purge job for the 14-day deletion grace period; the common-password list is short (swap in a larger breached-password list or the HIBP range API); the app has not had an external security review or penetration test.
 
 ## Deployment
 
@@ -128,7 +141,7 @@ docs/API.md             endpoint reference
    - `TRUST_PROXY=1` behind a proxy/load balancer
    - `SMTP_*` and `MAIL_FROM` for password reset and verification emails
    - Storage: the local driver needs a **persistent disk** (`UPLOAD_DIR` pointing at it). For S3/R2/B2, implement the four-method driver in `server/src/services/storage.js` and set `STORAGE_DRIVER`.
-3. **Frontend (e.g. Vercel, Netlify):** root `client`, build `npm run build`, output `dist`, env `VITE_API_URL=https://your-api.example/api/v1`. Add an SPA rewrite of all paths to `/index.html`.
+3. **Frontend on Vercel:** import the repo with root directory `client` (framework: Vite). In `client/vercel.json`, replace `REPLACE-WITH-YOUR-API-HOST` with your API's host (e.g. `diu-hub-api.onrender.com`). Vercel then proxies `/api/*` to the API, so the browser sees one site: cookies stay first-party, keep `COOKIE_SAMESITE=lax`, and leave `VITE_API_URL` empty. `vercel.json` also adds the SPA fallback and all security headers. (If you instead call the API cross-site via `VITE_API_URL`, set `COOKIE_SAMESITE=none` and add the API origin to the CSP `connect-src`/`img-src`.)
 4. Create the first admin: register normally, then in MongoDB set `role: "admin"` on that user (there is intentionally no way to self-promote).
 
 Never commit `.env` files, uploaded files (`server/uploads/`) or build output.
@@ -139,4 +152,4 @@ Never commit `.env` files, uploaded files (`server/uploads/`) or build output.
 
 **Partial:** messaging is polling-based (no live typing/presence); file preview supports PDF, images and text (Office files download only); the "relevant" feed is a simple engagement and recency score; account erasure after the grace period is a manual admin action.
 
-**Not implemented:** object-storage driver (interface ready), push/email notifications (in-app only), image resizing, Bangla UI translation, OAuth sign-in, client unit tests.
+**Not implemented:** object-storage driver (interface ready), push/email notifications (in-app only), image resizing, Bangla UI translation, OAuth sign-in, two-factor authentication, client unit tests.

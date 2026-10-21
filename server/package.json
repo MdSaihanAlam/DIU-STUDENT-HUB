@@ -5,8 +5,8 @@
   "type": "module",
   "main": "src/server.js",
   "scripts": {
-    "dev": "node --watch src/server.js",
-    "dev:mem": "node --watch src/server.js --memory",
+    "dev": "node --watch-path=src --watch-path=scripts src/server.js",
+    "dev:mem": "node --watch-path=src --watch-path=scripts src/server.js --memory",
     "start": "node src/server.js",
     "seed": "node scripts/seed.js",
     "test": "node --test --test-concurrency=1 tests/*.test.js"
@@ -22,7 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.24.0",
     "multer": "^2.0.2",
-    "nodemailer": "^7.0.10",
+    "nodemailer": "^10.1.7",
     "zod": "^3.25.0"
   },
   "devDependencies": {

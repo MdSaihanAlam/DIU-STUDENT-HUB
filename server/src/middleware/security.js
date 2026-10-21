@@ -3,7 +3,7 @@ import rateLimit from 'express-rate-limit';
 import { env } from '../config/env.js';
 import { ApiError } from '../utils/http.js';
 
-export const CSRF_COOKIE = 'hub_csrf';
+export const CSRF_COOKIE = env.isProd || env.cookieSameSite === 'none' ? '__Host-hub_csrf' : 'hub_csrf';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 /**
@@ -56,7 +56,16 @@ function scrub(value, depth = 0) {
 export function sanitizeInput(req, res, next) {
   if (req.body) scrub(req.body);
   if (req.params) scrub(req.params);
-  if (req.query) scrub(req.query);
+  // Query values are always plain strings: repeated keys (?a=1&a=2) collapse to the first value,
+  // which blocks HTTP parameter pollution and array/object smuggling into database filters.
+  if (req.query) {
+    for (const [k, v] of Object.entries(req.query)) {
+      if (k.startsWith('$') || k.includes('.') || k === '__proto__') delete req.query[k];
+      else if (Array.isArray(v)) req.query[k] = String(v[0] ?? '');
+      else if (v !== null && typeof v === 'object') delete req.query[k];
+      else req.query[k] = String(v).slice(0, 500);
+    }
+  }
   next();
 }
 

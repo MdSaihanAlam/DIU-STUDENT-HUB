@@ -6,7 +6,19 @@ import { Alert, Button, TextField } from '../../components/ui.jsx';
 import { useDocumentTitle } from '../../hooks/index.js';
 import { AuthShell, PasswordField } from './AuthShell.jsx';
 
-const safeNext = (n) => (n && n.startsWith('/') && !n.startsWith('//') ? n : '/feed');
+// Only same-site paths: rejects //evil.com, /\evil.com and encoded variants (open-redirect protection).
+const safeNext = (n) => {
+  if (!n || !n.startsWith('/')) return '/feed';
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(n);
+    } catch {
+      return '//';
+    }
+  })();
+  // eslint-disable-next-line no-control-regex -- control characters are exactly what we reject
+  return /^\/(?![/\\])/.test(decoded) && !/[\\\u0000-\u001f]/.test(decoded) ? n : '/feed';
+};
 
 export default function Login() {
   useDocumentTitle('Sign in');
@@ -34,7 +46,8 @@ export default function Login() {
 
   return (
     <AuthShell>
-      <h1>Welcome back</h1>
+      <span className="eyebrow-label">Sign in</span>
+      <h1 style={{ marginTop: 6 }}>Welcome back 👋</h1>
       <p className="muted">Sign in to your DIU Student Hub account.</p>
       <form className="stack" onSubmit={submit} noValidate={false}>
         {error && (

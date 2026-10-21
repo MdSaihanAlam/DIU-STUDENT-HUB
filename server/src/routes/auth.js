@@ -12,6 +12,7 @@ r.get('/csrf', c.csrf);
 r.post('/register', authLimiter, validate(registerSchema), h(c.register));
 r.post('/login', authLimiter, validate(loginSchema), h(c.login));
 r.post('/logout', c.logout);
+r.post('/logout-all', requireAuth, h(c.logoutAll));
 r.get('/me', requireAuth, h(c.me));
 r.post('/forgot-password', authLimiter, validate(forgotSchema), h(c.forgotPassword));
 r.post('/reset-password', authLimiter, validate(resetSchema), h(c.resetPassword));

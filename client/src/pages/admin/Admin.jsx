@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, Building2, ClipboardList, Flag, History, LayoutDashboard, Pencil, Plus, Sparkles, Trash2, Users } from 'lucide-react';
+import { BadgeCheck, Building2, ClipboardList, Flag, History, LayoutDashboard, Pencil, Plus, Shield, Sparkles, Trash2, Users } from 'lucide-react';
 import { api } from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -799,7 +799,7 @@ export default function Admin() {
   ];
   return (
     <>
-      <PageHeader title="Admin & moderation" subtitle="All actions are permission-checked on the server and recorded in the audit log." />
+      <PageHeader icon={Shield} tone="violet" title="Admin & moderation" subtitle="All actions are permission-checked on the server and recorded in the audit log." />
       <Tabs tabs={tabs} value={tab} onChange={setTab} label="Admin sections" />
       {stats.error && <ErrorState error={stats.error} onRetry={stats.reload} />}
       {tab === 'overview' && <Overview stats={stats.data} go={setTab} />}

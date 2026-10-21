@@ -171,7 +171,7 @@ export default function Events() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader icon={CalendarDays} tone="blue"
         title="Events & announcements"
         subtitle="Seminars, workshops, career fairs, club activities, competitions and academic deadlines."
         actions={

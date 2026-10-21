@@ -2,17 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AlertCircle, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Alert, Button, Chips, Field, TextField } from '../../components/ui.jsx';
+import { Alert, Button, Chips, Field, PasswordStrength, TextField } from '../../components/ui.jsx';
 import { useDocumentTitle } from '../../hooks/index.js';
 import { AuthShell, PasswordField } from './AuthShell.jsx';
 
-const passwordIssues = (p) => {
-  const issues = [];
-  if (p.length < 8) issues.push('at least 8 characters');
-  if (!/[A-Za-z]/.test(p)) issues.push('a letter');
-  if (!/\d/.test(p)) issues.push('a number');
-  return issues;
-};
+const passwordIssues = (p) => (p.length < 10 ? ['at least 10 characters'] : []);
 
 export default function Register() {
   useDocumentTitle('Join');
@@ -44,7 +38,8 @@ export default function Register() {
 
   return (
     <AuthShell>
-      <h1>Create your account</h1>
+      <span className="eyebrow-label">Join free</span>
+      <h1 style={{ marginTop: 6 }}>Create your account</h1>
       <p className="muted">Join the DIU community in less than a minute.</p>
       <form className="stack" onSubmit={submit}>
         {error && (
@@ -54,7 +49,8 @@ export default function Register() {
         )}
         <TextField label="Full name" value={form.name} onChange={set('name')} autoComplete="name" required minLength={2} maxLength={80} autoFocus />
         <TextField label="Email" type="email" value={form.email} onChange={set('email')} autoComplete="email" required hint="Your DIU email makes verification easier, but any email works." />
-        <PasswordField label="Password" value={form.password} onChange={set('password')} autoComplete="new-password" id="new-password" hint="At least 8 characters with letters and numbers." error={touched && issues.length ? `Password needs ${issues.join(', ')}` : ''} />
+        <PasswordField label="Password" value={form.password} onChange={set('password')} autoComplete="new-password" id="new-password" hint="At least 10 characters. A short phrase is easiest to remember." error={touched && issues.length ? `Password needs ${issues.join(', ')}` : ''} />
+        <PasswordStrength value={form.password} />
         <Field label="I am a">
           <Chips
             label="Affiliation"

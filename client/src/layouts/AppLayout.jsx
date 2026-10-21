@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Bell,
@@ -32,6 +32,7 @@ import { api } from '../services/api.js';
 import { useInterval } from '../hooks/index.js';
 import { Avatar, Button, Menu, MenuItem, PageLoader } from '../components/ui.jsx';
 import { RightRail } from './RightRail.jsx';
+import { BrandMark } from './PublicLayout.jsx';
 
 export const NAV = [
   { section: 'Community' },
@@ -56,18 +57,8 @@ export const NAV = [
 function Brand() {
   return (
     <Link to="/feed" className="brand" aria-label="DIU Student Hub home">
-      <span className="brand-mark" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 64 64">
-          <defs>
-            <linearGradient id="bm" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#5a8bff" />
-              <stop offset="1" stopColor="#22d3ee" />
-            </linearGradient>
-          </defs>
-          <path d="M14 14h16c11 0 20 7 20 18s-9 18-20 18H14z" fill="none" stroke="url(#bm)" strokeWidth="8" strokeLinejoin="round" />
-        </svg>
-      </span>
-      <span className="brand-name">
+      <BrandMark />
+      <span className="brand-name hide-mobile-sm">
         DIU Student Hub
         <small>Independent community</small>
       </span>
@@ -78,19 +69,39 @@ function Brand() {
 function TopSearch() {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
+  const ref = useRef(null);
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+  useEffect(() => {
+    // Ctrl/⌘+K or "/" focuses search (ignored while typing in another field).
+    const onKey = (e) => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
+      if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) {
+        e.preventDefault();
+        ref.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   return (
     <form
       className="topbar-search"
       role="search"
       onSubmit={(e) => {
         e.preventDefault();
-        if (q.trim().length >= 2) navigate(`/search?q=${encodeURIComponent(q.trim())}`);
+        if (q.trim().length >= 2) {
+          navigate(`/search?q=${encodeURIComponent(q.trim())}`);
+          ref.current?.blur();
+        }
       }}
     >
       <div className="input-icon">
         <Search size={17} aria-hidden="true" />
-        <input className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search posts, people, notes, research…" aria-label="Search DIU Student Hub" />
+        <input ref={ref} className="input" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search posts, people, notes, research…" aria-label="Search DIU Student Hub" aria-keyshortcuts="Control+K /" />
       </div>
+      <kbd className="kbd" aria-hidden="true">
+        {isMac ? '⌘K' : 'Ctrl K'}
+      </kbd>
     </form>
   );
 }
@@ -210,6 +221,16 @@ export default function AppLayout() {
 
       <div className={`shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${hideRail ? 'no-rail' : ''}`}>
         <nav className="sidebar" aria-label="Main navigation">
+          <Link to={`/u/${user?._id}`} className="me-card" title="View my profile">
+            <Avatar user={user} />
+            <div className="me-text grow" style={{ lineHeight: 1.3 }}>
+              <div className="bold truncate">{user?.name}</div>
+              <div className="xs muted truncate">
+                {[user?.department?.code, user?.affiliation].filter(Boolean).join(' · ')}
+                {user?.affiliationVerified ? ' · verified' : ''}
+              </div>
+            </div>
+          </Link>
           {NAV.map((item, i) =>
             item.section ? (
               <div key={i} className="nav-section">
@@ -271,6 +292,7 @@ export default function AppLayout() {
         <>
           <div className="drawer-backdrop" onClick={() => setDrawer(false)} />
           <div className="drawer" role="dialog" aria-modal="true" aria-label="All sections">
+            <div className="drawer-handle" aria-hidden="true" />
             <div className="drawer-grid">
               {NAV.filter((n) => !n.section).map((n) => (
                 <Link key={n.to} to={n.to}>

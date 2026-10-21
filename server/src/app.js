@@ -11,13 +11,25 @@ import apiRouter from './routes/index.js';
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
+  // "simple" = Node's querystring: no nested objects in ?query (sanitizeInput then flattens arrays).
+  app.set('query parser', 'simple');
   if (env.trustProxy) app.set('trust proxy', env.trustProxy);
 
   app.use(
     helmet({
+      // The API only serves JSON and files, never HTML, so it can use the strictest possible CSP.
+      contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"], baseUri: ["'none'"], formAction: ["'none'"] } },
       crossOriginResourcePolicy: { policy: 'cross-origin' }, // lets the SPA on another origin show uploaded images
+      strictTransportSecurity: env.isProd ? { maxAge: 63072000, includeSubDomains: true, preload: true } : false,
+      referrerPolicy: { policy: 'no-referrer' },
     })
   );
+  app.use((req, res, next) => {
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+    // API responses carry personal data: never store them in shared caches.
+    if (!req.path.startsWith('/api/v1/files/')) res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
   app.use(
     cors({
       origin(origin, cb) {

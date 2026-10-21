@@ -5,6 +5,7 @@ import { User, VerificationRequest } from '../models/index.js';
 import { clearSession, issueSession } from '../middleware/auth.js';
 import { issueCsrf } from '../middleware/security.js';
 import { sendMail, mailConfigured } from '../services/mail.js';
+import { lockRemaining, recordFailure, recordSuccess } from '../services/loginGuard.js';
 import { ApiError, ok } from '../utils/http.js';
 
 const hashToken = (t) => crypto.createHash('sha256').update(t).digest('hex');
@@ -32,6 +33,19 @@ async function sendVerificationEmail(user) {
   });
 }
 
+/** Fire-and-forget security notice; failures are logged, never shown to the user. */
+function notifyPasswordChanged(user) {
+  sendMail({
+    to: user.email,
+    subject: 'Your DIU Student Hub password was changed',
+    text: `Hi ${user.name},
+
+The password for your account was just changed and all other sessions were signed out.
+
+If this wasn't you, reset your password immediately at ${env.clientUrl}/forgot-password and contact the moderators.`,
+  }).catch((err) => console.error('[mail] password notice failed:', err.message));
+}
+
 export function csrf(req, res) {
   ok(res, { csrfToken: issueCsrf(req, res) });
 }
@@ -51,10 +65,20 @@ export async function register(req, res) {
 
 export async function login(req, res) {
   const { email, password } = req.body;
+  const locked = lockRemaining(email);
+  if (locked) {
+    res.setHeader('Retry-After', Math.ceil(locked / 1000));
+    throw new ApiError(429, `Too many failed sign-in attempts. Try again in ${Math.ceil(locked / 60000)} minute(s), or reset your password.`);
+  }
   const user = await User.findOne({ email }).select('+passwordHash');
   const valid = user ? await user.checkPassword(password) : await bcrypt.compare(password, DUMMY_HASH);
-  if (!user || !valid || user.status === 'deleted') throw ApiError.unauthorized('Incorrect email or password');
+  if (!user || !valid || user.status === 'deleted') {
+    recordFailure(email);
+    throw ApiError.unauthorized('Incorrect email or password');
+  }
+  recordSuccess(email);
   if (user.status === 'suspended') throw ApiError.forbidden('This account is suspended. Contact the moderators if you think this is a mistake.');
+  user.lastLoginAt = new Date();
 
   if (user.status === 'deletion_requested') {
     // Signing in during the grace period cancels the deletion request.
@@ -62,8 +86,17 @@ export async function login(req, res) {
     user.deletionRequestedAt = undefined;
     await user.save();
   }
+  await user.save();
   issueSession(res, user);
   ok(res, { user: await loadSelf(user._id) });
+}
+
+/** Sign out of every device by invalidating all existing session tokens. */
+export async function logoutAll(req, res) {
+  req.user.tokenVersion += 1;
+  await req.user.save();
+  clearSession(res);
+  ok(res, { loggedOut: true });
 }
 
 export function logout(req, res) {
@@ -98,8 +131,10 @@ export async function resetPassword(req, res) {
   }
   await user.setPassword(req.body.password);
   user.passwordReset = undefined;
+  recordSuccess(user.email); // a successful reset lifts any sign-in lock
   user.tokenVersion += 1; // sign out every other session
   await user.save();
+  notifyPasswordChanged(user);
   ok(res, { message: 'Password updated. You can now sign in.' });
 }
 
@@ -121,9 +156,11 @@ export async function resendVerification(req, res) {
 export async function changePassword(req, res) {
   const user = await User.findById(req.user._id).select('+passwordHash');
   if (!(await user.checkPassword(req.body.currentPassword))) throw ApiError.badRequest('Current password is incorrect');
+  if (await user.checkPassword(req.body.newPassword)) throw ApiError.badRequest('Choose a password different from your current one');
   await user.setPassword(req.body.newPassword);
   user.tokenVersion += 1;
   await user.save();
+  notifyPasswordChanged(user);
   issueSession(res, user); // keep this session, revoke others
   ok(res, { message: 'Password changed. Other sessions were signed out.' });
 }

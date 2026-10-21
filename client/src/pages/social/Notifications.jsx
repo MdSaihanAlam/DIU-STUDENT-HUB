@@ -34,7 +34,7 @@ export default function Notifications() {
 
   return (
     <div className="main-narrow">
-      <PageHeader
+      <PageHeader icon={Bell} tone="amber"
         title="Notifications"
         actions={
           <Button variant="ghost" icon={CheckCheck} onClick={readAll}>

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Briefcase, Eye, EyeOff, FlaskConical, Home, Users } from 'lucide-react';
+import { BookOpen, Eye, EyeOff, FlaskConical, ShieldCheck, Users } from 'lucide-react';
 import { BrandMark } from '../../layouts/PublicLayout.jsx';
-import { Field } from '../../components/ui.jsx';
+import { Field, IconTile } from '../../components/ui.jsx';
 
 export function AuthShell({ children }) {
   return (
@@ -13,29 +13,47 @@ export function AuthShell({ children }) {
           <span>DIU Student Hub</span>
         </Link>
         <div>
-          <h2>Your campus, connected.</h2>
-          <p style={{ maxWidth: 420 }}>Notes, people, research, housing and careers — built by and for the Dhaka International University community.</p>
-          <ul className="auth-points">
-            <li>
-              <BookOpen size={18} aria-hidden="true" /> Share and find course notes and slides
-            </li>
-            <li>
-              <Users size={18} aria-hidden="true" /> Join department, batch and study communities
-            </li>
-            <li>
-              <FlaskConical size={18} aria-hidden="true" /> Discover research and find collaborators
-            </li>
-            <li>
-              <Home size={18} aria-hidden="true" /> Find mess seats, sublets and roommates
-            </li>
-            <li>
-              <Briefcase size={18} aria-hidden="true" /> Internships, jobs and alumni mentors
-            </li>
-          </ul>
+          <h2>
+            Your campus,
+            <br />
+            <span className="gradient-text">connected.</span>
+          </h2>
+          <p style={{ maxWidth: 440, fontSize: '1.05rem', marginBottom: 32 }}>Notes, people, research, housing and careers — built by and for the Dhaka International University community.</p>
+          <div className="auth-float" aria-hidden="true">
+            <div className="glass row">
+              <IconTile icon={BookOpen} size="sm" />
+              <div>
+                <div className="small bold" style={{ color: '#fff' }}>
+                  CSE 221 · DP slides
+                </div>
+                <div className="xs">1.2k downloads · ★ 4.8</div>
+              </div>
+            </div>
+            <div className="glass row">
+              <IconTile icon={FlaskConical} size="sm" tone="violet" />
+              <div>
+                <div className="small bold" style={{ color: '#fff' }}>
+                  Looking for collaborators
+                </div>
+                <div className="xs">Bangla NLP research</div>
+              </div>
+            </div>
+            <div className="glass row">
+              <IconTile icon={Users} size="sm" tone="cyan" />
+              <div>
+                <div className="small bold" style={{ color: '#fff' }}>
+                  ML Study Group
+                </div>
+                <div className="xs">Thursday · Library</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="xs" style={{ opacity: 0.7 }}>
-          Independent community project — not officially operated or endorsed by Dhaka International University.
-        </p>
+        <ul className="auth-points" style={{ marginTop: 0 }}>
+          <li>
+            <ShieldCheck size={18} aria-hidden="true" /> Private by default · moderated · independent community project
+          </li>
+        </ul>
       </aside>
       <main className="auth-main" id="main">
         <div className="auth-card">{children}</div>

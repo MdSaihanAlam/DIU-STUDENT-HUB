@@ -15,7 +15,7 @@ describe('authentication', () => {
 
   it('registers, keeps the session in an HttpOnly cookie and returns /me', async () => {
     const c = await client();
-    const res = await c.post('/api/v1/auth/register').send({ name: 'Ayesha', email: 'AYESHA@Example.test', password: 'Secure123', acceptTerms: true });
+    const res = await c.post('/api/v1/auth/register').send({ name: 'Ayesha', email: 'AYESHA@Example.test', password: 'Secure-Pass-9', acceptTerms: true });
     assert.equal(res.status, 201);
     const cookie = res.headers['set-cookie'].find((h) => h.startsWith('hub_token='));
     assert.match(cookie, /HttpOnly/i);
@@ -31,15 +31,15 @@ describe('authentication', () => {
     const c = await client();
     const weak = await c.post('/api/v1/auth/register').send({ name: 'Weak', email: 'weak@example.test', password: 'password', acceptTerms: true });
     assert.equal(weak.status, 400);
-    await c.post('/api/v1/auth/register').send({ name: 'Dup', email: 'dup@example.test', password: 'Secure123', acceptTerms: true });
+    await c.post('/api/v1/auth/register').send({ name: 'Dup', email: 'dup@example.test', password: 'Secure-Pass-9', acceptTerms: true });
     const c2 = await client();
-    const dup = await c2.post('/api/v1/auth/register').send({ name: 'Dup', email: 'dup@example.test', password: 'Secure123', acceptTerms: true });
+    const dup = await c2.post('/api/v1/auth/register').send({ name: 'Dup', email: 'dup@example.test', password: 'Secure-Pass-9', acceptTerms: true });
     assert.equal(dup.status, 409);
   });
 
   it('ignores user-supplied role and verification fields', async () => {
     const c = await client();
-    const res = await c.post('/api/v1/auth/register').send({ name: 'Mallory', email: 'mallory@example.test', password: 'Secure123', acceptTerms: true, role: 'admin', affiliation: 'faculty', affiliationVerified: true });
+    const res = await c.post('/api/v1/auth/register').send({ name: 'Mallory', email: 'mallory@example.test', password: 'Secure-Pass-9', acceptTerms: true, role: 'admin', affiliation: 'faculty', affiliationVerified: true });
     assert.equal(res.status, 201);
     assert.equal(res.body.data.user.role, 'member');
     assert.equal(res.body.data.user.affiliationVerified, false);

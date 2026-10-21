@@ -5,17 +5,20 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { PageLoader } from '../components/ui.jsx';
 
-export function BrandMark({ size = 20 }) {
+export function BrandMark({ size = 22 }) {
+  // Monogram "D" drawn as an open arc with a spark — reads as both "DIU" and a speech bubble.
   return (
     <span className="brand-mark" aria-hidden="true">
       <svg width={size} height={size} viewBox="0 0 64 64">
         <defs>
-          <linearGradient id="pbm" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#5a8bff" />
+          <linearGradient id="brand-g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#7c9bff" />
+            <stop offset=".55" stopColor="#a78bfa" />
             <stop offset="1" stopColor="#22d3ee" />
           </linearGradient>
         </defs>
-        <path d="M14 14h16c11 0 20 7 20 18s-9 18-20 18H14z" fill="none" stroke="url(#pbm)" strokeWidth="8" strokeLinejoin="round" />
+        <path d="M16 12h14c13 0 22 8.5 22 20s-9 20-22 20H22l-6 6V12z" fill="none" stroke="url(#brand-g)" strokeWidth="7" strokeLinejoin="round" />
+        <circle cx="31" cy="32" r="5" fill="#22d3ee" />
       </svg>
     </span>
   );
@@ -74,8 +77,11 @@ export function Footer() {
           </ul>
         </div>
       </div>
-      <div className="container subtle xs" style={{ marginTop: 24 }}>
-        © {new Date().getFullYear()} DIU Student Hub community project.
+      <div className="container">
+        <div className="footer-bottom subtle xs">
+          <span>© {new Date().getFullYear()} DIU Student Hub — a student community project.</span>
+          <span>Made with care in Dhaka 🇧🇩</span>
+        </div>
       </div>
     </footer>
   );

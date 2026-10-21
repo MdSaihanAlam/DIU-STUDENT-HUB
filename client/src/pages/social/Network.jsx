@@ -47,7 +47,7 @@ export default function Network() {
 
   return (
     <div className="main-narrow">
-      <PageHeader title="My network" subtitle="Connections, requests and mentorships." />
+      <PageHeader icon={UserPlus} tone="cyan" title="My network" subtitle="Connections, requests and mentorships." />
       <Tabs
         tabs={[
           { value: 'requests', label: 'Requests', count: lists.incoming.length },

@@ -42,7 +42,7 @@ export default function Saved() {
 
   return (
     <div className="main-narrow">
-      <PageHeader title="Saved items" subtitle="Posts, notes, listings and opportunities you bookmarked. Saved events and deadlines send reminders." />
+      <PageHeader icon={Bookmark} tone="pink" title="Saved items" subtitle="Posts, notes, listings and opportunities you bookmarked. Saved events and deadlines send reminders." />
       <Tabs tabs={TABS} value={type} onChange={setType} />
       {list.loading ? (
         <CardSkeleton count={3} lines={1} />

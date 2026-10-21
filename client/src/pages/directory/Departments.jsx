@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, FlaskConical, GraduationCap, Users } from 'lucide-react';
 import { useApi, useDebounce, useDocumentTitle, usePaginated } from '../../hooks/index.js';
-import { Avatar, Badge, EmptyState, ErrorState, GridSkeleton, LoadMore, PageHeader, SampleBadge, SearchInput, Tabs } from '../../components/ui.jsx';
+import { Avatar, Badge, LetterTile, EmptyState, ErrorState, GridSkeleton, LoadMore, PageHeader, SampleBadge, SearchInput, Tabs } from '../../components/ui.jsx';
 import { DepartmentFilter } from '../../components/common.jsx';
 
 export function FacultyCard({ f }) {
@@ -62,7 +62,7 @@ export default function Departments() {
   const { data, error, loading, reload } = useApi('/departments');
   return (
     <>
-      <PageHeader title="Departments & faculty" subtitle="Explore departments, programs, research areas and faculty members." />
+      <PageHeader icon={Building2} tone="cyan" title="Departments & faculty" subtitle="Explore departments, programs, research areas and faculty members." />
       <Tabs
         tabs={[
           { value: 'departments', label: 'Departments', icon: Building2 },
@@ -82,9 +82,9 @@ export default function Departments() {
           {data.items.map((d) => (
             <Link key={d._id} to={`/departments/${d.slug}`} className="card card-link stack" style={{ gap: 10 }}>
               <div className="row">
-                <span className="avatar avatar-lg" style={{ borderRadius: 14, fontSize: '0.95rem' }} aria-hidden="true">
-                  {d.code}
-                </span>
+                <LetterTile name={d.name} size={56} radius={16}>
+                  <span style={{ fontSize: '0.9rem' }}>{d.code}</span>
+                </LetterTile>
                 <div className="grow">
                   <div className="card-title">{d.name}</div>
                   <div className="small muted">{d.faculty}</div>

@@ -39,7 +39,7 @@ let counter = 0;
 export async function registerUser(overrides = {}) {
   const c = await client();
   counter += 1;
-  const body = { name: `Test User ${counter}`, email: `user${counter}-${Date.now()}@example.test`, password: 'Passw0rd!', affiliation: 'student', acceptTerms: true, ...overrides };
+  const body = { name: `Test User ${counter}`, email: `user${counter}-${Date.now()}@example.test`, password: 'Correct-Horse-42', affiliation: 'student', acceptTerms: true, ...overrides };
   const res = await c.post('/api/v1/auth/register').send(body);
   if (res.status !== 201) throw new Error(`register failed: ${JSON.stringify(res.body)}`);
   return { ...c, user: res.body.data.user, credentials: body };

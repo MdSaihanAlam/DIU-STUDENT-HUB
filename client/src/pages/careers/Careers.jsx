@@ -130,7 +130,7 @@ export default function Careers() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader icon={Briefcase} tone="amber"
         title="Careers & opportunities"
         subtitle="Jobs, internships, scholarships, research assistantships, competitions and hackathons."
         actions={

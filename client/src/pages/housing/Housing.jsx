@@ -64,7 +64,7 @@ export default function Housing() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader icon={BedDouble} tone="pink"
         title="Housing & accommodation"
         subtitle="Mess seats, sublets, hostels, apartments and roommates near campus."
         actions={

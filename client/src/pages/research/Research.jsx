@@ -62,7 +62,7 @@ export default function Research() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader icon={FlaskConical} tone="violet"
         title="Research & innovation hub"
         subtitle="Ongoing and completed research by DIU students and faculty. Find projects, follow progress and collaborate."
         actions={

@@ -3,12 +3,16 @@ import { env } from '../config/env.js';
 import { User } from '../models/index.js';
 import { ApiError } from '../utils/http.js';
 
-export const AUTH_COOKIE = 'hub_token';
+export const SECURE_COOKIES = env.isProd || env.cookieSameSite === 'none';
+// "__Host-" cookies must be Secure, path=/ and host-only, so subdomains cannot overwrite them.
+export const AUTH_COOKIE = SECURE_COOKIES ? '__Host-hub_token' : 'hub_token';
+
+const JWT_OPTS = { algorithm: 'HS256', issuer: 'diu-student-hub', audience: 'diu-student-hub-web' };
 
 export function cookieOptions(extra = {}) {
   return {
     httpOnly: true,
-    secure: env.isProd || env.cookieSameSite === 'none',
+    secure: SECURE_COOKIES,
     sameSite: env.cookieSameSite,
     path: '/',
     ...extra,
@@ -17,6 +21,7 @@ export function cookieOptions(extra = {}) {
 
 export function issueSession(res, user) {
   const token = jwt.sign({ sub: user._id.toString(), v: user.tokenVersion }, env.jwtSecret, {
+    ...JWT_OPTS,
     expiresIn: env.jwtExpiresIn,
   });
   res.cookie(AUTH_COOKIE, token, cookieOptions({ maxAge: 7 * 24 * 60 * 60 * 1000 }));
@@ -31,10 +36,12 @@ async function resolveUser(req) {
   if (!token) return null;
   let payload;
   try {
-    payload = jwt.verify(token, env.jwtSecret);
+    // Pin the algorithm so tokens signed with "none" or an asymmetric key are rejected.
+    payload = jwt.verify(token, env.jwtSecret, { algorithms: ['HS256'], issuer: JWT_OPTS.issuer, audience: JWT_OPTS.audience });
   } catch {
     return null;
   }
+  if (typeof payload?.sub !== 'string' || !/^[a-f\d]{24}$/i.test(payload.sub)) return null;
   const user = await User.findById(payload.sub);
   if (!user || user.tokenVersion !== payload.v) return null;
   if (user.status === 'deleted' || user.status === 'suspended') return null;

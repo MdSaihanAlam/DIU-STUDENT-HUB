@@ -4,7 +4,7 @@ import { Lock, Plus, Users } from 'lucide-react';
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useDebounce, useDocumentTitle, usePaginated, useQueryFilters } from '../../hooks/index.js';
-import { Badge, Button, Dialog, EmptyState, ErrorState, GridSkeleton, LoadMore, PageHeader, SampleBadge, SearchInput, SelectField, Tabs, TextField } from '../../components/ui.jsx';
+import { Badge, Button, Dialog, LetterTile, EmptyState, ErrorState, GridSkeleton, LoadMore, PageHeader, SampleBadge, SearchInput, SelectField, Tabs, TextField } from '../../components/ui.jsx';
 import { DepartmentSelect } from '../../components/common.jsx';
 import { COMMUNITY_TYPES, label } from '../../utils/constants.js';
 
@@ -67,9 +67,7 @@ export function CommunityCard({ c }) {
   return (
     <Link to={`/communities/${c.slug}`} className="card card-link stack" style={{ gap: 10 }}>
       <div className="row">
-        <span className="avatar avatar-lg" style={{ borderRadius: 16 }} aria-hidden="true">
-          {c.name[0]}
-        </span>
+        <LetterTile name={c.name} size={56} radius={16} />
         <div className="grow" style={{ minWidth: 0 }}>
           <div className="card-title truncate">{c.name}</div>
           <div className="small muted">
@@ -104,7 +102,7 @@ export default function Communities() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader icon={Users} tone="violet"
         title="Communities"
         subtitle="Department, batch, course, research and interest groups."
         actions={

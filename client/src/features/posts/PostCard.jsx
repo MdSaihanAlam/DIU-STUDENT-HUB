@@ -192,7 +192,7 @@ function PostCard({ post, onChange, onRemove, showComments = false, canPin = fal
   };
 
   return (
-    <article className="card post-card" aria-labelledby={`post-${post._id}-author`}>
+    <article className={`card post-card ${post.official ? 'is-official' : ''}`} aria-labelledby={`post-${post._id}-author`}>
       <header className="post-head">
         <Link to={`/u/${author?._id}`} aria-hidden="true" tabIndex={-1}>
           <Avatar user={author} />
@@ -289,7 +289,16 @@ function PostCard({ post, onChange, onRemove, showComments = false, canPin = fal
       {post.poll && <Poll post={post} onUpdate={(p) => update(p)} />}
 
       <div className="post-stats">
-        <span>{post.reactionCount > 0 && `${post.reactionCount} reaction${post.reactionCount === 1 ? '' : 's'}`}</span>
+        <span className="row" style={{ gap: 0 }}>
+          {post.reactionCount > 0 && (
+            <>
+              <span className="reaction-bubbles" aria-hidden="true">
+                <span>{REACTIONS.find(([v]) => v === post.myReaction)?.[1] || '👍'}</span>
+              </span>
+              {post.reactionCount}
+            </>
+          )}
+        </span>
         <span>
           {post.commentCount > 0 && (
             <button className="btn-ghost" style={{ border: 0, background: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }} onClick={() => setCommentsOpen(true)}>

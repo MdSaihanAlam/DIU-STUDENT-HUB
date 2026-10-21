@@ -312,6 +312,9 @@ export async function removeConnection(req, res) {
 
 // ---------- Account deletion ----------
 export async function requestDeletion(req, res) {
+  // Re-authenticate: a stolen session (or someone at an unlocked laptop) must not be able to delete the account.
+  const withHash = await User.findById(req.user._id).select('+passwordHash');
+  if (!(await withHash.checkPassword(req.body.password))) throw ApiError.badRequest('Password is incorrect');
   req.user.status = 'deletion_requested';
   req.user.deletionRequestedAt = new Date();
   req.user.tokenVersion += 1;

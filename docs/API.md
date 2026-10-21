@@ -20,8 +20,9 @@ List endpoints accept `page` and `limit` and return `{ items, page, limit, total
 | --- | --- | --- |
 | GET | `/auth/csrf` | — |
 | POST | `/auth/register` | `name, email, password, affiliation, acceptTerms` |
-| POST | `/auth/login` | `email, password` |
+| POST | `/auth/login` | `email, password` (429 + `Retry-After` while locked after repeated failures) |
 | POST | `/auth/logout` | — |
+| POST | `/auth/logout-all` 🔒 | Revokes every session on every device |
 | GET | `/auth/me` 🔒 | — |
 | POST | `/auth/forgot-password` | `email` (always 200) |
 | POST | `/auth/reset-password` | `token, password` |
@@ -38,7 +39,7 @@ List endpoints accept `page` and `limit` and return `{ items, page, limit, total
 | PATCH | `/users/me/settings` | `privacy`, `notificationPrefs` |
 | POST / DELETE | `/users/me/avatar` | multipart `avatar` (≤3 MB) |
 | GET | `/users/me/blocked` | |
-| POST | `/users/me/delete-request` | Deactivate & schedule deletion |
+| POST | `/users/me/delete-request` | `password` — deactivate & schedule deletion |
 | GET | `/users/me/connections` | `connections, incoming, outgoing, mentorships` |
 | POST | `/users/connections/:id/respond` | `accept: boolean` |
 | DELETE | `/users/connections/:id` | Remove / withdraw |

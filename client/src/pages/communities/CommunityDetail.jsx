@@ -4,7 +4,7 @@ import { ArrowLeft, Link2, Lock, Plus, Settings2, Trash2, Users, X } from 'lucid
 import { api } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useApi, useDocumentTitle, usePaginated } from '../../hooks/index.js';
-import { Alert, Avatar, Badge, Button, CardSkeleton, Dialog, EmptyState, ErrorState, LoadMore, SampleBadge, SelectField, Tabs, TextField } from '../../components/ui.jsx';
+import { Alert, Avatar, Badge, LetterTile, Button, CardSkeleton, Dialog, EmptyState, ErrorState, LoadMore, SampleBadge, SelectField, Tabs, TextField } from '../../components/ui.jsx';
 import { ReportButton, UserLine } from '../../components/common.jsx';
 import Composer from '../../features/posts/Composer.jsx';
 import PostCard from '../../features/posts/PostCard.jsx';
@@ -217,8 +217,8 @@ export default function CommunityDetail() {
         <div className="profile-cover" style={{ height: 110 }} />
         <div className="profile-head" style={{ marginTop: -36 }}>
           <div className="row-wrap" style={{ gap: 16 }}>
-            <span className="avatar avatar-xl" style={{ borderRadius: 22, '--size': '84px' }} aria-hidden="true">
-              {c.name[0]}
+            <span style={{ borderRadius: 24, boxShadow: '0 0 0 5px var(--bg-elevated), var(--shadow)' }}>
+              <LetterTile name={c.name} size={88} radius={24} />
             </span>
             <div className="grow" style={{ minWidth: 200 }}>
               <h1 className="mb-0">{c.name}</h1>

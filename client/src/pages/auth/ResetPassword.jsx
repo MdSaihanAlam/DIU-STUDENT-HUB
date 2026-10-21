@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { api } from '../../services/api.js';
-import { Alert, Button } from '../../components/ui.jsx';
+import { Alert, Button, PasswordStrength } from '../../components/ui.jsx';
 import { useDocumentTitle } from '../../hooks/index.js';
 import { AuthShell, PasswordField } from './AuthShell.jsx';
 
@@ -43,7 +43,8 @@ export default function ResetPassword() {
       ) : (
         <form className="stack" onSubmit={submit}>
           {error && <Alert tone="danger">{error}</Alert>}
-          <PasswordField label="New password" value={password} onChange={setPassword} autoComplete="new-password" id="np" hint="At least 8 characters with letters and numbers." />
+          <PasswordField label="New password" value={password} onChange={setPassword} autoComplete="new-password" id="np" hint="At least 10 characters. Avoid common passwords and your name." />
+          <PasswordStrength value={password} />
           <PasswordField label="Confirm new password" value={confirm} onChange={setConfirm} autoComplete="new-password" id="np2" />
           <Button type="submit" variant="primary" size="lg" block loading={busy}>
             Update password
