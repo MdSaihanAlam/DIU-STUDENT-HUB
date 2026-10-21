@@ -1,0 +1,121 @@
+/* ==========================================================================
+   Design tokens — DIU Student Hub
+   Navy + electric blue + white, cyan/violet accents used sparingly.
+   ========================================================================== */
+:root {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Bengali', sans-serif;
+
+  /* Brand */
+  --navy-950: #060f26;
+  --navy-900: #0b1b3f;
+  --navy-800: #13285a;
+  --navy-700: #1c3775;
+  --blue-600: #2156e8;
+  --blue-500: #2f6bff;
+  --blue-400: #5a8bff;
+  --blue-100: #e3ecff;
+  --blue-50: #f1f5ff;
+  --cyan-500: #06b6d4;
+  --cyan-100: #d5f6fb;
+  --violet-500: #7c3aed;
+  --violet-100: #ede4fe;
+
+  /* Semantic (light) */
+  --bg: #f5f7fb;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #eef2f8;
+  --bg-hover: #f0f3f9;
+  --surface-strong: var(--navy-900);
+  --text: #0e1a33;
+  --text-muted: #56627a;
+  --text-subtle: #7a859b;
+  --text-inverse: #ffffff;
+  --border: #e2e7f0;
+  --border-strong: #cdd5e3;
+  --primary: var(--blue-500);
+  --primary-hover: var(--blue-600);
+  --primary-soft: var(--blue-100);
+  --primary-softer: var(--blue-50);
+  --on-primary: #ffffff;
+  --accent: var(--cyan-500);
+  --accent-soft: var(--cyan-100);
+  --accent-2: var(--violet-500);
+  --accent-2-soft: var(--violet-100);
+  --success: #12a150;
+  --success-soft: #dcf5e7;
+  --warning: #c27803;
+  --warning-soft: #fdf1d6;
+  --danger: #dc2c3f;
+  --danger-soft: #fde3e6;
+  --focus-ring: 0 0 0 3px rgba(47, 107, 255, 0.35);
+
+  /* Shape & depth */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-full: 999px;
+  --shadow-xs: 0 1px 2px rgba(14, 26, 51, 0.05);
+  --shadow-sm: 0 1px 3px rgba(14, 26, 51, 0.06), 0 1px 2px rgba(14, 26, 51, 0.04);
+  --shadow: 0 6px 18px -6px rgba(14, 26, 51, 0.12), 0 2px 6px -2px rgba(14, 26, 51, 0.06);
+  --shadow-lg: 0 24px 48px -16px rgba(14, 26, 51, 0.22);
+
+  /* Spacing scale (4px base) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+
+  /* Layout */
+  --topbar-h: 60px;
+  --sidebar-w: 248px;
+  --sidebar-w-collapsed: 76px;
+  --rail-w: 300px;
+  --content-max: 680px;
+  --bottom-nav-h: 64px;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur: 160ms;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #070d1d;
+  --bg-elevated: #0e1830;
+  --bg-subtle: #131f3b;
+  --bg-hover: #16244a;
+  --surface-strong: #050b1a;
+  --text: #e8edf8;
+  --text-muted: #a3afc7;
+  --text-subtle: #7c89a5;
+  --border: #1e2c4f;
+  --border-strong: #2b3c66;
+  --primary: #4d82ff;
+  --primary-hover: #6a96ff;
+  --primary-soft: rgba(77, 130, 255, 0.16);
+  --primary-softer: rgba(77, 130, 255, 0.08);
+  --accent-soft: rgba(6, 182, 212, 0.16);
+  --accent-2-soft: rgba(124, 58, 237, 0.2);
+  --success-soft: rgba(18, 161, 80, 0.18);
+  --warning-soft: rgba(194, 120, 3, 0.2);
+  --danger-soft: rgba(220, 44, 63, 0.2);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur: 0ms;
+  }
+}
