@@ -19,6 +19,19 @@ if (isProd && jwtSecret.length < 32) {
   throw new Error('JWT_SECRET must be at least 32 characters in production');
 }
 
+// Render sets RENDER_EXTERNAL_URL (e.g. https://diu-student-hub.onrender.com); use it as the
+// default public URL so a single-service deploy needs no extra configuration.
+// On Vercel, VERCEL_PROJECT_PRODUCTION_URL is the production domain (without https://).
+const publicUrl =
+  process.env.PUBLIC_URL ||
+  process.env.RENDER_EXTERNAL_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '');
+const list = (v) =>
+  String(v || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
 export const env = {
   isProd,
   isTest,
@@ -27,16 +40,22 @@ export const env = {
   mongoUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/diu_student_hub',
   jwtSecret,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  clientOrigins: (process.env.CLIENT_ORIGINS || 'http://localhost:5173')
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean),
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  clientOrigins: list(process.env.CLIENT_ORIGINS || publicUrl || 'http://localhost:5173'),
+  clientUrl: process.env.CLIENT_URL || publicUrl || 'http://localhost:5173',
+  // Serve the built React app (client/dist) from this server: one service, same origin.
+  serveClient: process.env.SERVE_CLIENT === 'true',
+  // Accounts with these emails become admins when they register or sign in (first-admin bootstrap).
+  adminEmails: list(process.env.ADMIN_EMAILS).map((e) => e.toLowerCase()),
+  bootstrapDepartments: process.env.BOOTSTRAP_DEPARTMENTS !== 'false',
   cookieSameSite: process.env.COOKIE_SAMESITE || 'lax',
-  trustProxy: Number(process.env.TRUST_PROXY) || 0,
-  storageDriver: process.env.STORAGE_DRIVER || 'local',
+  trustProxy: Number(process.env.TRUST_PROXY) || (process.env.RENDER || process.env.VERCEL ? 1 : 0),
+  // Serverless platforms have no persistent disk, so default to storing uploads in MongoDB there.
+  storageDriver: process.env.STORAGE_DRIVER || (process.env.VERCEL || process.env.RENDER ? 'gridfs' : 'local'),
+  // Shared secret for the scheduled reminders endpoint (Vercel Cron sends it as a Bearer token).
+  cronSecret: process.env.CRON_SECRET || '',
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
-  maxUploadBytes: (Number(process.env.MAX_UPLOAD_MB) || 15) * 1024 * 1024,
+  // Vercel functions accept request bodies up to ~4.5 MB, so uploads default to 4 MB there.
+  maxUploadBytes: (Number(process.env.MAX_UPLOAD_MB) || (process.env.VERCEL ? 4 : 15)) * 1024 * 1024,
   resourcesRequireApproval: process.env.RESOURCES_REQUIRE_APPROVAL !== 'false',
   smtp: {
     host: process.env.SMTP_HOST || '',

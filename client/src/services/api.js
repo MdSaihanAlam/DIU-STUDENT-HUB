@@ -72,7 +72,7 @@ async function request(method, path, { body, params, signal, retry = true } = {}
   if (!res.ok) {
     const message =
       json?.error?.message ||
-      (res.status >= 500 ? 'The server is temporarily unavailable. Please try again in a moment.' : res.status === 429 ? 'Too many requests. Please slow down and try again shortly.' : `Request failed (${res.status})`);
+      (res.status >= 500 ? 'The server is temporarily unavailable. Please try again in a moment.' : res.status === 429 ? 'Too many requests. Please slow down and try again shortly.' : res.status === 413 ? 'That upload is too large. Please choose smaller files (4 MB max in total).' : `Request failed (${res.status})`);
     // CSRF token rotated (e.g. cookie cleared) — fetch a fresh one and retry once.
     if (res.status === 403 && /security token/i.test(message) && retry) {
       await ensureCsrf(true);

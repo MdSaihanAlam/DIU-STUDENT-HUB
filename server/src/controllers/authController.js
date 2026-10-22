@@ -6,6 +6,7 @@ import { clearSession, issueSession } from '../middleware/auth.js';
 import { issueCsrf } from '../middleware/security.js';
 import { sendMail, mailConfigured } from '../services/mail.js';
 import { lockRemaining, recordFailure, recordSuccess } from '../services/loginGuard.js';
+import { applyAdminBootstrap } from '../services/bootstrap.js';
 import { ApiError, ok } from '../utils/http.js';
 
 const hashToken = (t) => crypto.createHash('sha256').update(t).digest('hex');
@@ -57,6 +58,7 @@ export async function register(req, res) {
   const user = new User({ name, email, affiliation, affiliationVerified: false, role: 'member' });
   await user.setPassword(password);
   await user.save();
+  await applyAdminBootstrap(user);
   await sendVerificationEmail(user);
 
   issueSession(res, user);
@@ -79,6 +81,7 @@ export async function login(req, res) {
   recordSuccess(email);
   if (user.status === 'suspended') throw ApiError.forbidden('This account is suspended. Contact the moderators if you think this is a mistake.');
   user.lastLoginAt = new Date();
+  await applyAdminBootstrap(user);
 
   if (user.status === 'deletion_requested') {
     // Signing in during the grace period cancels the deletion request.

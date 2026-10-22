@@ -8,9 +8,11 @@ import messageRoutes from './messages.js';
 import adminRoutes from './admin.js';
 import publicRoutes from './public.js';
 import fileRoutes from './files.js';
+import cronRoutes from './cron.js';
 
 const router = Router();
 
+router.use('/cron', cronRoutes);
 router.use('/auth', authRoutes);
 router.use('/public', publicRoutes);
 router.use('/files', fileRoutes);

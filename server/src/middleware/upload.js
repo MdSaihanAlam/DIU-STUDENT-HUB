@@ -46,8 +46,11 @@ export function inspectFile(file, allowedExts) {
 
 const memory = multer.memoryStorage();
 
+// Per-route limits never exceed the platform-wide MAX_UPLOAD_MB.
+const cap = (bytes) => Math.min(bytes, env.maxUploadBytes);
+
 export const uploadSingle = (field, { maxBytes = env.maxUploadBytes } = {}) =>
-  multer({ storage: memory, limits: { fileSize: maxBytes, files: 1 } }).single(field);
+  multer({ storage: memory, limits: { fileSize: cap(maxBytes), files: 1 } }).single(field);
 
 export const uploadMany = (field, max = 6, { maxBytes = 5 * 1024 * 1024 } = {}) =>
-  multer({ storage: memory, limits: { fileSize: maxBytes, files: max } }).array(field, max);
+  multer({ storage: memory, limits: { fileSize: cap(maxBytes), files: max } }).array(field, max);

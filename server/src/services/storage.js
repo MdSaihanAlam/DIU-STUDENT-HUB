@@ -3,6 +3,7 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 
 const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -57,17 +58,59 @@ function createLocalDriver(baseDir) {
 }
 
 /**
+ * MongoDB GridFS driver: files are stored in the same database, split into 255 KB chunks.
+ * Ideal for free hosting where the server disk is wiped on every restart (e.g. Render free plan).
+ * Mind the database quota (512 MB on MongoDB Atlas M0); move to object storage as you grow.
+ */
+function createGridFsDriver() {
+  let bucket = null;
+  const getBucket = () => {
+    if (!bucket) {
+      if (mongoose.connection.readyState !== 1) throw new Error('Database is not connected');
+      bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
+    }
+    return bucket;
+  };
+  const checkKey = (key) => {
+    if (!/^[a-z]+\/[a-f0-9]{32}\.[a-z0-9]{1,5}$/.test(key)) throw new Error('Invalid storage key');
+    return key;
+  };
+  return {
+    name: 'gridfs',
+    save(buffer, { folder, ext }) {
+      const key = `${folder}/${crypto.randomBytes(16).toString('hex')}.${ext}`;
+      return new Promise((resolve, reject) => {
+        const upload = getBucket().openUploadStream(key);
+        upload.on('error', reject).on('finish', () => resolve(key));
+        upload.end(buffer);
+      });
+    },
+    stream(key) {
+      return getBucket().openDownloadStreamByName(checkKey(key));
+    },
+    async exists(key) {
+      return (await getBucket().find({ filename: checkKey(key) }).limit(1).toArray()).length > 0;
+    },
+    async remove(key) {
+      const files = await getBucket().find({ filename: checkKey(key) }).toArray();
+      await Promise.all(files.map((f) => getBucket().delete(f._id)));
+    },
+  };
+}
+
+/**
  * Object storage (S3, Cloudflare R2, Backblaze B2, ...) is not bundled to keep dependencies
  * small. To add it, implement the same four methods with the provider SDK and register it here.
  */
 function createUnconfiguredDriver(name) {
   const fail = () => {
-    throw new Error(`Storage driver "${name}" is not implemented. Set STORAGE_DRIVER=local or add a driver in services/storage.js`);
+    throw new Error(`Storage driver "${name}" is not implemented. Use STORAGE_DRIVER=local or gridfs, or add a driver in services/storage.js`);
   };
   return { name, save: fail, stream: fail, exists: fail, remove: fail };
 }
 
-export const storage = env.storageDriver === 'local' ? createLocalDriver(env.uploadDir) : createUnconfiguredDriver(env.storageDriver);
+const DRIVERS = { local: () => createLocalDriver(env.uploadDir), gridfs: createGridFsDriver };
+export const storage = (DRIVERS[env.storageDriver] || (() => createUnconfiguredDriver(env.storageDriver)))();
 
 /** URL under which public images (avatars, post images, listing photos) are served. */
 export const publicFileUrl = (key) => `/api/v1/files/${key}`;

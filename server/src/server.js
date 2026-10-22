@@ -2,6 +2,7 @@ import { env } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
 import { createApp } from './app.js';
 import { startReminderJob } from './services/reminders.js';
+import { ensureStarterDepartments } from './services/bootstrap.js';
 
 const useMemory = process.argv.includes('--memory');
 
@@ -13,6 +14,8 @@ async function main() {
   if (useMemory) {
     const { seed } = await import('../scripts/seed.js');
     await seed({ uri, connected: true });
+  } else {
+    await ensureStarterDepartments();
   }
 
   const app = createApp();

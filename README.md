@@ -132,17 +132,11 @@ docs/API.md             endpoint reference
 
 ## Deployment
 
-1. **Database:** create a MongoDB Atlas cluster, a database user, and allow your API host's IPs. Copy the connection string to `MONGODB_URI`.
-2. **API (e.g. Render, Railway, Fly.io):** root `server`, build `npm install`, start `npm start`, health check `/api/v1/health`. Set environment variables:
-   - `NODE_ENV=production`, `PORT`, `MONGODB_URI`
-   - `JWT_SECRET` (≥32 random characters)
-   - `CLIENT_ORIGINS=https://your-frontend.example` and `CLIENT_URL=https://your-frontend.example`
-   - `COOKIE_SAMESITE=none` if the frontend and API are on different sites (requires HTTPS), otherwise `lax`
-   - `TRUST_PROXY=1` behind a proxy/load balancer
-   - `SMTP_*` and `MAIL_FROM` for password reset and verification emails
-   - Storage: the local driver needs a **persistent disk** (`UPLOAD_DIR` pointing at it). For S3/R2/B2, implement the four-method driver in `server/src/services/storage.js` and set `STORAGE_DRIVER`.
-3. **Frontend on Vercel:** import the repo with root directory `client` (framework: Vite). In `client/vercel.json`, replace `REPLACE-WITH-YOUR-API-HOST` with your API's host (e.g. `diu-hub-api.onrender.com`). Vercel then proxies `/api/*` to the API, so the browser sees one site: cookies stay first-party, keep `COOKIE_SAMESITE=lax`, and leave `VITE_API_URL` empty. `vercel.json` also adds the SPA fallback and all security headers. (If you instead call the API cross-site via `VITE_API_URL`, set `COOKIE_SAMESITE=none` and add the API origin to the CSP `connect-src`/`img-src`.)
-4. Create the first admin: register normally, then in MongoDB set `role: "admin"` on that user (there is intentionally no way to self-promote).
+**Free and fastest: Vercel + MongoDB Atlas** — follow **[DEPLOY.md](DEPLOY.md)** (about 15 minutes). The root `vercel.json` builds the React app, runs the Express API as one serverless function (`api/index.mjs`) on the same domain, stores uploads in MongoDB (GridFS), and schedules the daily reminder job.
+
+**Any Node host (Render, Railway, a VPS):** build with `npm ci && npm run build`, start with `npm start`, and set `SERVE_CLIENT=true` so the API also serves the website from one URL. Use `STORAGE_DRIVER=gridfs` unless the host has a persistent disk. Health check: `/api/v1/health`.
+
+Key environment variables (see `server/.env.example`): `MONGODB_URI`, `JWT_SECRET` (≥32 random chars), `ADMIN_EMAILS` (first admin), `CRON_SECRET` (scheduled reminders), `STORAGE_DRIVER` (`local` or `gridfs`), `MAX_UPLOAD_MB`, `SMTP_*`. `CLIENT_URL`/`CLIENT_ORIGINS` default to the platform URL on Vercel and Render.
 
 Never commit `.env` files, uploaded files (`server/uploads/`) or build output.
 
