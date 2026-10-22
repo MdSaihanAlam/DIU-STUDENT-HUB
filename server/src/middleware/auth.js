@@ -45,6 +45,7 @@ async function resolveUser(req) {
   const user = await User.findById(payload.sub);
   if (!user || user.tokenVersion !== payload.v) return null;
   if (user.status === 'deleted' || user.status === 'suspended') return null;
+  if (!env.allowDemoAccounts && user.isDemoAccount()) return null; // no demo sessions on production
   return user;
 }
 

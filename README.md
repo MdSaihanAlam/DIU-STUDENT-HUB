@@ -33,9 +33,9 @@ npm run seed                             # optional: load demo data (refuses to 
 npm run dev
 ```
 
-### Development accounts
+### Development accounts (local only)
 
-Created by the seed script only (it refuses to run when `NODE_ENV=production`). Password for all: `DemoPass123`
+The seed script creates these accounts **on your local machine only**. Password for all: `DemoPass123`
 
 | Email | Role |
 | --- | --- |
@@ -45,6 +45,14 @@ Created by the seed script only (it refuses to run when `NODE_ENV=production`). 
 | `faculty@demo.diuhub.test` | Verified faculty (can publish official announcements/events) |
 | `alumni@demo.diuhub.test` | Verified alumni (mentor) |
 | `pending.faculty@demo.diuhub.test` | Faculty awaiting verification |
+
+Because this password is public, three independent safeguards keep these accounts off real deployments:
+
+1. **The seed only touches local databases.** It refuses `NODE_ENV=production` and any database that is not `localhost`/`127.0.0.1`/`::1` (so an Atlas `mongodb+srv://` string is always rejected). `--allow-remote-database` exists only for disposable staging databases.
+2. **Demo accounts cannot sign in on production.** Any account flagged as demo or using the reserved `@demo.diuhub.test` domain is rejected at sign-in (with the same "Incorrect email or password" response) and any existing session for it is ignored. Set `ALLOW_DEMO_ACCOUNTS=true` only on a throw-away demo deployment.
+3. **Nobody can register with the reserved demo domain.**
+
+Production never runs the seed: Vercel and `npm start` only create the starter departments (names and codes, no people).
 
 Without SMTP configured, password-reset and email-verification links are printed to the API console in development.
 

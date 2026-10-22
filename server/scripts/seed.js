@@ -48,9 +48,25 @@ const DEPARTMENTS = [
   { code: 'ECO', name: 'Economics', faculty: 'Faculty of Social Science', areas: ['Development Economics', 'Econometrics'] },
 ];
 
-export async function seed({ uri = env.mongoUri, connected = false, quiet = false } = {}) {
-  if (env.isProd) throw new Error('Refusing to seed demo data in production.');
-  if (!connected) await connectDB(uri);
+/** Only local databases may be wiped and seeded: localhost, 127.0.0.1, ::1 (incl. the in-memory server). */
+export function isLocalDatabase(uri = '') {
+  const m = /^mongodb:\/\/(?:[^@/]*@)?([^/?]+)/i.exec(uri);
+  if (!m) return false; // mongodb+srv:// is always a hosted cluster (e.g. Atlas)
+  return m[1].split(',').every((h) => /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(h.trim()));
+}
+
+export async function seed({ uri = env.mongoUri, connected = false, quiet = false, allowRemote = false } = {}) {
+  // The seed DELETES every collection and creates accounts whose password is published in the
+  // README, so it must never touch a real database.
+  if (env.isProd) throw new Error('Refusing to seed demo data in production (NODE_ENV=production).');
+  const target = connected ? uri : uri || env.mongoUri;
+  if (!isLocalDatabase(target) && !allowRemote) {
+    throw new Error(
+      'Refusing to seed a non-local database. The seed wipes all data and creates demo accounts with a public password. ' +
+        'Point MONGODB_URI at a local MongoDB, or pass --allow-remote-database for a disposable staging database.'
+    );
+  }
+  if (!connected) await connectDB(target);
   const log = (...a) => !quiet && console.log('[seed]', ...a);
 
   await Promise.all(Object.values(M).filter((m) => m?.deleteMany && m.modelName).map((m) => m.deleteMany({})));
@@ -387,7 +403,7 @@ export async function seed({ uri = env.mongoUri, connected = false, quiet = fals
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  seed().catch((err) => {
+  seed({ allowRemote: process.argv.includes('--allow-remote-database') }).catch((err) => {
     console.error('[seed] failed:', err);
     process.exit(1);
   });

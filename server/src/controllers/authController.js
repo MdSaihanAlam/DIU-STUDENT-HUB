@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { env } from '../config/env.js';
-import { User, VerificationRequest } from '../models/index.js';
+import { DEMO_EMAIL_DOMAIN, User, VerificationRequest } from '../models/index.js';
 import { clearSession, issueSession } from '../middleware/auth.js';
 import { issueCsrf } from '../middleware/security.js';
 import { sendMail, mailConfigured } from '../services/mail.js';
@@ -53,6 +53,7 @@ export function csrf(req, res) {
 
 export async function register(req, res) {
   const { name, email, password, affiliation } = req.body;
+  if (email.endsWith(DEMO_EMAIL_DOMAIN)) throw ApiError.badRequest('This email domain is reserved. Please use your own email address.');
   if (await User.exists({ email })) throw ApiError.conflict('An account with this email already exists');
 
   const user = new User({ name, email, affiliation, affiliationVerified: false, role: 'member' });
@@ -74,7 +75,9 @@ export async function login(req, res) {
   }
   const user = await User.findOne({ email }).select('+passwordHash');
   const valid = user ? await user.checkPassword(password) : await bcrypt.compare(password, DUMMY_HASH);
-  if (!user || !valid || user.status === 'deleted') {
+  // Demo accounts are treated exactly like wrong credentials on production, so the published
+  // demo password is useless there and the response does not reveal that the account exists.
+  if (!user || !valid || user.status === 'deleted' || (!env.allowDemoAccounts && user.isDemoAccount())) {
     recordFailure(email);
     throw ApiError.unauthorized('Incorrect email or password');
   }

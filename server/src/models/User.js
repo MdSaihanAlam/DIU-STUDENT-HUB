@@ -82,6 +82,14 @@ userSchema.methods.checkPassword = function checkPassword(plain) {
   return bcrypt.compare(plain, this.passwordHash);
 };
 
+/** Domain used only by the development seed script (reserved .test TLD, never a real mailbox). */
+export const DEMO_EMAIL_DOMAIN = '@demo.diuhub.test';
+
+/** True for accounts created by the seed script, by flag or by email domain (defence in depth). */
+userSchema.methods.isDemoAccount = function isDemoAccount() {
+  return Boolean(this.isDemo) || String(this.email || '').endsWith(DEMO_EMAIL_DOMAIN);
+};
+
 userSchema.virtual('isStaff').get(function isStaff() {
   return this.role === 'admin' || this.role === 'moderator';
 });

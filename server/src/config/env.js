@@ -47,6 +47,9 @@ export const env = {
   // Accounts with these emails become admins when they register or sign in (first-admin bootstrap).
   adminEmails: list(process.env.ADMIN_EMAILS).map((e) => e.toLowerCase()),
   bootstrapDepartments: process.env.BOOTSTRAP_DEPARTMENTS !== 'false',
+  // Seeded demo accounts share a publicly documented password, so they can never sign in on
+  // production. ALLOW_DEMO_ACCOUNTS overrides the default (only for staging/demo deployments).
+  allowDemoAccounts: process.env.ALLOW_DEMO_ACCOUNTS ? process.env.ALLOW_DEMO_ACCOUNTS === 'true' : !isProd,
   cookieSameSite: process.env.COOKIE_SAMESITE || 'lax',
   trustProxy: Number(process.env.TRUST_PROXY) || (process.env.RENDER || process.env.VERCEL ? 1 : 0),
   // Serverless platforms have no persistent disk, so default to storing uploads in MongoDB there.
